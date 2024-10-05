@@ -15,18 +15,18 @@
 
 Убедитесь, что у вас установлен Python 3.6 или выше. Затем установите необходимые библиотеки, если они не установлены.
 
-bash
+```bash
 pip install -r requirements.txt
-
+```
 ## Использование
 
 ### Функция run_dna_rna_tools
 
 Эта функция выполняет указанные процедуры (транскрипция, реверс, комплементарность) для заданных последовательностей ДНК/РНК.
 
-python
+```python
 def run_dna_rna_tools(*args: Union[str, List[str]]) -> Union[str, List[str], None]:
-
+```
 #### Аргументы
 
 - *args: Последовательности ДНК/РНК и процедура, которую нужно выполнить. Последний аргумент должен быть строкой, обозначающей процедуру.
@@ -45,9 +45,9 @@ def run_dna_rna_tools(*args: Union[str, List[str]]) -> Union[str, List[str], Non
 
 Эта функция фильтрует последовательности в формате FASTQ на основе заданных критериев.
 
-python
+```python
 def filter_fastq(seqs: Dict[str, Tuple[str, str]], gc_bounds: Tuple[float, float] = (0.0, 100.0), length_bounds: Tuple[int, int] = (0, 2**32), quality_threshold: int = 0) -> Dict[str, Tuple[str, str]]:
-
+```
 #### Аргументы
 
 - seqs: Словарь с именами последовательностей в качестве ключей и кортежами (последовательность, качество) в качестве значений.
@@ -67,13 +67,13 @@ def filter_fastq(seqs: Dict[str, Tuple[str, str]], gc_bounds: Tuple[float, float
 
 ### Пример использования функции run_dna_rna_tools
 
-python
+```python
 result = run_dna_rna_tools("ACGT", "transcribe")
 print(result)  # Вывод: "UGCA"
-
+```
 ### Пример использования функции filter_fastq
 
-python
+```python
 seqs = {
     "read1": ("ACGTACGT", "IIIIIIII"),
     "read2": ("GGCTAGCT", "IIIIIIII"),
@@ -81,7 +81,7 @@ seqs = {
 
 filtered = filter_fastq(seqs, gc_bounds=(40, 60), quality_threshold=20)
 print(filtered)  # Вывод: {'read1': ('ACGTACGT', 'IIIIIIII')}
-
+```
 ---
 
 Этот README описывает основные функции и их использование в проекте.
