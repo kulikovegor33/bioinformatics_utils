@@ -1,87 +1,150 @@
 # DNA/RNA Tools and FASTQ Filter
 
-Этот проект содержит функции для работы с последовательностями ДНК/РНК и фильтрации последовательностей в формате FASTQ.
+This project contains functions for working with DNA/RNA sequences and filtering sequences in FASTQ format.
 
-## Оглавление
+## Table of Contents
 
-- [Установка](#установка)
-- [Использование](#использование)
-  - [Функция run_dna_rna_tools](#функция-rundna_rna_tools)
-  - [Функция filter_fastq](#функция-filter_fastq)
-- [Исключения](#исключения)
-- [Примеры](#примеры)
+- Installation
+- Usage
+  - Function run_dna_rna_tools
+  - Function filter_fastq
+  - Function convert_multiline_fasta_to_oneline
+  - Function parse_blast_output
+  - Function select_genes_from_gbk_to_fasta
+- Exceptions
+- Examples
 
-## Установка
+## Installation
 
-Убедитесь, что у вас установлен Python 3.6 или выше. Затем установите необходимые библиотеки, если они не установлены.
+Ensure you have Python 3.6 or higher installed. Then, install the required libraries if they are not already installed.
 
 ```bash
 pip install -r requirements.txt
 ```
-## Использование
+## Usage
 
-### Функция run_dna_rna_tools
+### Function run_dna_rna_tools
 
-Эта функция выполняет указанные процедуры (транскрипция, реверс, комплементарность) для заданных последовательностей ДНК/РНК.
+This function performs specified procedures (transcription, reverse, complement) for given DNA/RNA sequences.
 
 ```python
 def run_dna_rna_tools(*args: Union[str, List[str]]) -> Union[str, List[str], None]:
 ```
-#### Аргументы
+#### Arguments
 
-- *args: Последовательности ДНК/РНК и процедура, которую нужно выполнить. Последний аргумент должен быть строкой, обозначающей процедуру.
+- *args: DNA/RNA sequences and the procedure to perform. The last argument should be a string indicating the procedure.
 
-#### Возвращаемое значение
+#### Return Value
 
-- Результат выполнения процедуры:
-  - Если процедура "transcribe", возвращает транскрибированную последовательность.
-  - Если процедура "reverse", возвращает развёрнутую последовательность.
-  - Если процедура "complement", возвращает комплементарную последовательность.
-  - Если процедура "reverse_complement", возвращает обратную комплементарную последовательность.
+- Result of the procedure:
+  - If the procedure is "transcribe", returns the transcribed sequence.
+  - If the procedure is "reverse", returns the reversed sequence.
+  - If the procedure is "complement", returns the complementary sequence.
+  - If the procedure is "reverse_complement", returns the reverse complementary sequence.
 
-Если последовательностей одна, возвращает строку, если больше одной — список строк. Если последовательностей нет, возвращает None.
+If there is one sequence, it returns a string; if there are multiple, it returns a list of strings. If there are no sequences, it returns None.
 
-### Функция filter_fastq
-
-Эта функция фильтрует последовательности в формате FASTQ на основе заданных критериев.
+### Function filter_fastq
 
 ```python
-def filter_fastq(seqs: Dict[str, Tuple[str, str]], gc_bounds: Tuple[float, float] = (0.0, 100.0), length_bounds: Tuple[int, int] = (0, 2**32), quality_threshold: int = 0) -> Dict[str, Tuple[str, str]]:
+filter_fastq(input_fastq: str, output_fastq: str, 
+              gc_bounds: Tuple[float, float] = (0.0, 100.0), 
+              length_bounds: Tuple[int, int] = (0, 2**32), 
+              quality_threshold: int = 0) -> None
 ```
-#### Аргументы
+#### Parameters:
 
-- seqs: Словарь с именами последовательностей в качестве ключей и кортежами (последовательность, качество) в качестве значений.
-- gc_bounds: Интервал GC-состава (в процентах) для фильтрации. По умолчанию (0, 100) — все риды сохраняются.
-- length_bounds: Интервал длины для фильтрации. По умолчанию (0, 2**32).
-- quality_threshold: Пороговое значение среднего качества рида для фильтрации. По умолчанию равно 0 (шкала phred33).
+- input_fastq (str): Path to the input FASTQ file.
+- output_fastq (str): Path to the output FASTQ file where filtered sequences will be saved.
+- gc_bounds (Tuple[float, float]): Minimum and maximum GC content for filtering.
+- length_bounds (Tuple[int, int]): Minimum and maximum sequence length for filtering.
+- quality_threshold (int): Minimum average quality score for filtering.
 
-#### Возвращаемое значение
+### Function convert_multiline_fasta_to_oneline
 
-- Словарь с отфильтрованными последовательностями в формате {имя_последовательности: (последовательность, качество)}.
+This function converts multi-line FASTA files into single-line format.
 
-## Исключения
+```python
+def convert_multiline_fasta_to_one_line(fasta_file: str) -> Dict[str, str]:
+```
+#### Arguments
 
-- ValueError: Если последовательность недействительна или процедура неизвестна.
+- fasta_file: Path to the multi-line FASTA file.
 
-## Примеры
+#### Return Value
 
-### Пример использования функции run_dna_rna_tools
+- A dictionary with sequence identifiers as keys and single-line sequences as values.
+
+### Function parse_blast_output
+
+This function parses BLAST output files and extracts relevant information.
+
+```python
+def parse_blast_output(blast_file: str) -> List[Dict[str, Union[str, float]]]:
+```
+#### Arguments
+
+- blast_file: Path to the BLAST output file.
+
+#### Return Value
+
+- A list of dictionaries containing parsed BLAST results.
+
+### Function select_genes_from_gbk_to_fasta
+
+This function selects specific genes from GenBank files and converts them into FASTA format.
+
+```python
+def select_genes_from_gbk_to_fasta(gbk_file: str, gene_list: List[str]) -> Dict[str, str]:
+```
+#### Arguments
+
+- gbk_file: Path to the GenBank file.
+- gene_list: List of gene names to extract.
+
+#### Return Value
+
+- A dictionary with gene names as keys and their corresponding FASTA sequences as values.
+
+## Exceptions
+
+- ValueError: If a sequence is invalid or an unknown procedure is specified.
+
+## Examples
+
+### Example usage of function run_dna_rna_tools
 
 ```python
 result = run_dna_rna_tools("ACGT", "transcribe")
-print(result)  # Вывод: "UGCA"
+print(result)  # Output: "UGCA"
 ```
-### Пример использования функции filter_fastq
+
+### Example usage of function filter_fastq
 
 ```python
-seqs = {
-    "read1": ("ACGTACGT", "IIIIIIII"),
-    "read2": ("GGCTAGCT", "IIIIIIII"),
-}
+if name == "main":
+    input_file = "example_fastq.fastq"
+    output_file = "output.fastq"
 
-filtered = filter_fastq(seqs, gc_bounds=(40, 60), quality_threshold=20)
-print(filtered)  # Вывод: {'read1': ('ACGTACGT', 'IIIIIIII')}
+    filter_fastq(input_file, output_file, gc_bounds=(30.0, 70.0), length_bounds=(50, 300), quality_threshold=20)
 ```
----
 
-Этот README описывает основные функции и их использование в проекте.
+### Example usage of function convert_multiline_fasta_to_oneline
+
+```python
+sequences = convert_multiline_fasta_to_oneline("input.fasta")
+print(sequences)  # Output: {'seq1': 'ATCG...', 'seq2': 'GCTA...'}
+```
+### Example usage of function parse_blast_output
+
+```python
+results = parse_blast_output("output.blast")
+print(results)  # Output: [{'query': 'seq1', 'subject': 'subject1', 'score': 100.0}, ...]
+```
+
+### Example usage of function select_genes_from_gbk_to_fasta
+
+```python
+fasta_sequences = select_genes_from_gbk_to_fasta("genome.gbk", ["gene1", "gene2"])
+print(fasta_sequences)  # Output: {'gene1': 'ATCG...', 'gene2': 'GCTA...'}
+```

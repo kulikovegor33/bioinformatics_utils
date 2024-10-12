@@ -3,6 +3,7 @@ from typing import List, Union, Dict, Tuple
 from scripts.script_dna_rna_tools import is_valid_sequence, transcribe, reverse
 from scripts.script_dna_rna_tools import complement, reverse_complement
 from scripts.script_fastq_filter import gc_content, average_quality
+from scripts.script_fastq_filter import read_fastq, write_fastq
 
 
 def run_dna_rna_tools(
@@ -10,35 +11,35 @@ def run_dna_rna_tools(
 ) -> Union[str, List[str], None]:
 
     """
-    Выполняет указанные процедуры (транскрипция,
-реверс, комплементарность) для заданных
-последовательностей ДНК/РНК.
+    Executes specified procedures (transcription,
+    reverse, complementarity) for given
+    DNA/RNA sequences.
 
     Args:
-        *args: Последовательности ДНК/РНК и
-процедура, которую нужно выполнить.
-               Последний аргумент должен быть строкой,
-обозначающей процедуру.
+        *args: DNA/RNA sequences and
+        the procedure to perform.
+               The last argument must be a string
+               indicating the procedure.
 
     Returns:
-        Результат выполнения процедуры:
-        - Если процедура "transcribe", возвращает
-транскрибированную последовательность.
-        - Если процедура "reverse",
-возвращает развёрнутую последовательность.
-        - Если процедура "complement",
-возвращает комплементарную последовательность.
-        - Если процедура "reverse_complement",
-возвращает обратную комплементарную последовательность.
+        The result of the procedure execution:
+        - If the procedure is "transcribe", returns
+          the transcribed sequence.
+        - If the procedure is "reverse",
+          returns the reversed sequence.
+        - If the procedure is "complement",
+          returns the complementary sequence.
+        - If the procedure is "reverse_complement",
+          returns the reverse complementary sequence.
 
-        Если последовательностей одна, возвращает
-строку, если больше одной - возвращает список строк.
-        Если последовательностей нет, возвращает
-None.
+        If there is one sequence, returns
+        a string; if more than one, returns a list of strings.
+        If there are no sequences, returns
+        None.
 
     Raises:
-        ValueError: Если последовательность
-недействительна или процедура неизвестна.
+        ValueError: If the sequence
+        is invalid or the procedure is unknown.
     """
 
     if not args:
@@ -65,65 +66,55 @@ None.
     return result if len(result) > 1 else result[0]
 
 
-def filter_fastq(
-    seqs: Dict[str, Tuple[str, str]],
-    gc_bounds: Tuple[float, float] = (0.0, 100.0),
-    length_bounds: Tuple[int, int] = (0, 2**32),
-    quality_threshold: int = 0
-) -> Dict[str, Tuple[str, str]]:
+def filter_fastq(input_fastq: str, output_fastq: str,
+                 gc_bounds: Tuple[float, float] = (0.0, 100.0),
+                 length_bounds: Tuple[int, int] = (0, 2**32),
+                 quality_threshold: int = 0) -> None:
     """
-    Фильтрует последовательности в формате FASTQ
-на основе заданных критериев.
+    Filters sequences in FASTQ format based on specified criteria.
 
-    Args:
-        seqs: Словарь с именами последовательностей
-в качестве ключей и кортежами (последовательность,
-качество) в качестве значений.
-              Структура: {имя_последовательности:
-(последовательность, качество)}
-        gc_bounds: Интервал GC-состава (в процентах)
-для фильтрации.
-                   По умолчанию (0, 100) — все риды
-сохраняются.
-                   Если передать одно число,
-считается верхняя граница.
-                   Примеры: (20, 80) — сохраняем
-риды с GC составом от 20 до 80%,
-                   (44.4) — сохраняем риды с GC
-составом меньше 44.4%.
-        length_bounds: Интервал длины для
-фильтрации. По умолчанию (0, 2**32).
-                       Аналогично gc_bounds.
-        quality_threshold: Пороговое значение
-среднего качества рида для фильтрации.
-                           По умолчанию равно 0
-(шкала phred33). Риды со средним качеством ниже
-порога отбрасываются.
+    Parameters:
+    - input_fastq (str): Path to the input FASTQ file.
+    - output_fastq (str): Path to the output FASTQ file
+where filtered sequences will be saved.
+    - gc_bounds (Tuple[float, float]): Minimum and 
+maximum GC content percentage for filtering.
+    - length_bounds (Tuple[int, int]): Minimum and
+maximum sequence length for filtering.
+    - quality_threshold (int): Minimum average quality
+score for filtering.
 
     Returns:
-        Словарь с отфильтрованными
-последовательностями в формате {имя_последовательности: (последовательность,
-качество)}.
+    - None: The function writes the filtered sequences
+to the output file.
     """
 
-    filtered_seqs = {}
+    # Check and create directory for saving filtered data
+    output_dir = os.path.dirname(output_fastq)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    # Обработка gc_bounds
-    if isinstance(gc_bounds, (int, float)):
-        gc_bounds = (0.0, float(gc_bounds))
-
-    # Обработка length_bounds
-    if isinstance(length_bounds, int):
-        length_bounds = (0, length_bounds)
+    # Read data from the FASTQ file
+    seqs: Dict[str, Tuple[str, str]] = read_fastq(input_fastq)
+    filtered_seqs: Dict[str, Tuple[str, str]] = {}
 
     for name, (sequence, quality) in seqs.items():
-        gc_perc = gc_content(sequence)
-        seq_length = len(sequence)
-        avg_quality = average_quality(quality)
+        gc: float = gc_content(sequence)
+        length: int = len(sequence)
+        avg_quality: int = average_quality(quality)
 
-        if (gc_bounds[0] <= gc_perc <= gc_bounds[1] and
-                length_bounds[0] <= seq_length <= length_bounds[1] and
+        # Filtering based on conditions
+        if (gc_bounds[0] <= gc <= gc_bounds[1] and
+                length_bounds[0] <= length <= length_bounds[1] and
                 avg_quality >= quality_threshold):
             filtered_seqs[name] = (sequence, quality)
 
-    return filtered_seqs
+    # Write filtered data to the output file
+    write_fastq(filtered_seqs, output_fastq)
+
+if __name__ == "__main__":
+    # Usage of the function
+    input_file: str = "example_fastq.fastq"
+    output_file: str = "output.fastq"
+
+    filter_fastq(input_file, output_file, gc_bounds=(30.0, 70.0), length_bounds=(50, 300), quality_threshold=20)
