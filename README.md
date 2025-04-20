@@ -1,150 +1,72 @@
-# DNA/RNA Tools and FASTQ Filter
+# Bioinformatics Utils
 
-This project contains functions for working with DNA/RNA sequences and filtering sequences in FASTQ format.
+This project implements object-oriented bioinformatics tools for working with DNA, RNA, and protein sequences, as well as filtering FASTQ files using Biopython.
 
 ## Table of Contents
-
 - Installation
 - Usage
-  - Function run_dna_rna_tools
-  - Function filter_fastq
-  - Function convert_multiline_fasta_to_oneline
-  - Function parse_blast_output
-  - Function select_genes_from_gbk_to_fasta
-- Exceptions
+  - Biological Sequence Classes
+    - `BiologicalSequence`
+    - `NucleicAcidSequence`
+    - `DNASequence`
+    - `RNASequence`
+    - `AminoAcidSequence`
+  - FASTQ Filtering
 - Examples
 
 ## Installation
 
-Ensure you have Python 3.6 or higher installed. Then, install the required libraries if they are not already installed.
+Ensure you have Python 3.11 or higher and biopython 1.79 or higher installed.
 
-```bash
-pip install -r requirements.txt
-```
 ## Usage
 
-### Function run_dna_rna_tools
+### Biological Sequence Classes
 
-This function performs specified procedures (transcription, reverse, complement) for given DNA/RNA sequences.
+This project follows an OOP approach, where different types of biological sequences are implemented as classes.
 
-```python
-def run_dna_rna_tools(*args: Union[str, List[str]]) -> Union[str, List[str], None]:
-```
-#### Arguments
+#### `BiologicalSequence`
+Abstract base class for all biological sequences.
+- Supports sequence length (`len(seq)`), indexing (`seq[i]`), and string conversion (`str(seq)`).
+- Defines the abstract method `check_alphabet()` for sequence validation.
 
-- *args: DNA/RNA sequences and the procedure to perform. The last argument should be a string indicating the procedure.
+#### `NucleicAcidSequence`
+Intermediate class for nucleic acid sequences (DNA & RNA).
+- Implements:
+  - `complement()` - Returns the complementary sequence.
+  - `reverse()` - Returns the reversed sequence.
+  - `reverse_complement()` - Returns the reverse complementary sequence.
+- Uses `valid_chars` and `complement_map` to differentiate DNA and RNA.
 
-#### Return Value
+#### `DNASequence`
+Specialized class for DNA sequences, inheriting from `NucleicAcidSequence`.
+- Implements `transcribe()` to convert DNA into RNA.
 
-- Result of the procedure:
-  - If the procedure is "transcribe", returns the transcribed sequence.
-  - If the procedure is "reverse", returns the reversed sequence.
-  - If the procedure is "complement", returns the complementary sequence.
-  - If the procedure is "reverse_complement", returns the reverse complementary sequence.
+#### `RNASequence`
+Specialized class for RNA sequences, inheriting from `NucleicAcidSequence`.
 
-If there is one sequence, it returns a string; if there are multiple, it returns a list of strings. If there are no sequences, it returns None.
+#### `AminoAcidSequence`
+Class for protein sequences, inheriting from `BiologicalSequence`.
+- Implements `molecular_weight()` to compute protein mass using Biopython.
 
-### Function filter_fastq
+### FASTQ Filtering
 
-```python
-filter_fastq(input_fastq: str, output_fastq: str, 
-              gc_bounds: Tuple[float, float] = (0.0, 100.0), 
-              length_bounds: Tuple[int, int] = (0, 2**32), 
-              quality_threshold: int = 0) -> None
-```
-#### Parameters:
+`filter_fastq()` filters sequences from a FASTQ file based on:
+- GC content range (`gc_bounds`)
+- Sequence length range (`length_bounds`)
+- Minimum average quality score (`quality_threshold`)
 
-- input_fastq (str): Path to the input FASTQ file.
-- output_fastq (str): Path to the output FASTQ file where filtered sequences will be saved.
-- gc_bounds (Tuple[float, float]): Minimum and maximum GC content for filtering.
-- length_bounds (Tuple[int, int]): Minimum and maximum sequence length for filtering.
-- quality_threshold (int): Minimum average quality score for filtering.
-
-### Function convert_multiline_fasta_to_oneline
-
-This function converts multi-line FASTA files into single-line format.
-
-```python
-def convert_multiline_fasta_to_one_line(fasta_file: str) -> Dict[str, str]:
-```
-#### Arguments
-
-- fasta_file: Path to the multi-line FASTA file.
-
-#### Return Value
-
-- A dictionary with sequence identifiers as keys and single-line sequences as values.
-
-### Function parse_blast_output
-
-This function parses BLAST output files and extracts relevant information.
-
-```python
-def parse_blast_output(blast_file: str) -> List[Dict[str, Union[str, float]]]:
-```
-#### Arguments
-
-- blast_file: Path to the BLAST output file.
-
-#### Return Value
-
-- A list of dictionaries containing parsed BLAST results.
-
-### Function select_genes_from_gbk_to_fasta
-
-This function selects specific genes from GenBank files and converts them into FASTA format.
-
-```python
-def select_genes_from_gbk_to_fasta(gbk_file: str, gene_list: List[str]) -> Dict[str, str]:
-```
-#### Arguments
-
-- gbk_file: Path to the GenBank file.
-- gene_list: List of gene names to extract.
-
-#### Return Value
-
-- A dictionary with gene names as keys and their corresponding FASTA sequences as values.
-
-## Exceptions
-
-- ValueError: If a sequence is invalid or an unknown procedure is specified.
+Uses `SeqIO` and `SeqRecord` from Biopython.
 
 ## Examples
 
-### Example usage of function run_dna_rna_tools
-
+### Creating and Using DNA Sequences
 ```python
-result = run_dna_rna_tools("ACGT", "transcribe")
-print(result)  # Output: "UGCA"
+dna = DNASequence("ATGC")
+print(dna.complement())  # Output: "TACG"
+print(dna.transcribe())  # Output: "AUGC"
 ```
 
-### Example usage of function filter_fastq
-
+### Filtering FASTQ Files
 ```python
-if name == "main":
-    input_file = "example_fastq.fastq"
-    output_file = "output.fastq"
-
-    filter_fastq(input_file, output_file, gc_bounds=(30.0, 70.0), length_bounds=(50, 300), quality_threshold=20)
-```
-
-### Example usage of function convert_multiline_fasta_to_oneline
-
-```python
-sequences = convert_multiline_fasta_to_oneline("input.fasta")
-print(sequences)  # Output: {'seq1': 'ATCG...', 'seq2': 'GCTA...'}
-```
-### Example usage of function parse_blast_output
-
-```python
-results = parse_blast_output("output.blast")
-print(results)  # Output: [{'query': 'seq1', 'subject': 'subject1', 'score': 100.0}, ...]
-```
-
-### Example usage of function select_genes_from_gbk_to_fasta
-
-```python
-fasta_sequences = select_genes_from_gbk_to_fasta("genome.gbk", ["gene1", "gene2"])
-print(fasta_sequences)  # Output: {'gene1': 'ATCG...', 'gene2': 'GCTA...'}
+filter_fastq("input.fastq", "output.fastq", gc_bounds=(30, 70), length_bounds=(50, 300), quality_threshold=20)
 ```
