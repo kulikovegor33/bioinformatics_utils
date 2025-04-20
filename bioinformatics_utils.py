@@ -1,8 +1,10 @@
+import logging
+from typing import Tuple, List
 from abc import ABC
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqUtils import GC
+from Bio.SeqUtils import gc_fraction
 
 class BiologicalSequence(ABC):
     def __init__(self, sequence: str) -> None:
@@ -75,17 +77,42 @@ class AminoAcidSequence(BiologicalSequence):
         from Bio.SeqUtils.ProtParam import ProteinAnalysis
         return ProteinAnalysis(self.sequence).molecular_weight()
 
-def filter_fastq(input_fastq: str, output_fastq: str, gc_bounds: Tuple[float, float] = (0, 100), length_bounds: Tuple[int, float] = (0, float('inf')), quality_threshold: int = 0) -> None:
+
+def filter_fastq(input_fastq: str, output_fastq: str,
+                 gc_bounds: Tuple[float, float] = (0, 100),
+                 length_bounds: Tuple[int, float] = (0, float('inf')),
+                 quality_threshold: int = 0,
+                 log_path: str = "filter.log") -> None:
     """Filter sequences in a FASTQ file based on GC content, length, and quality."""
     filtered_records: List[SeqRecord] = []
-    
-    for record in SeqIO.parse(input_fastq, "fastq"):
-        gc_content: float = GC(record.seq)
-        avg_quality: float = sum(record.letter_annotations["phred_quality"]) / len(record)
+    total = 0
+    passed = 0
+
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    logging.basicConfig(
+        filename=log_path,
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(message)s'
+    )
+
+    try:
+        for record in SeqIO.parse(input_fastq, "fastq"):
+            total += 1
+            gc_content: float = gc_fraction(record.seq) * 100
+            avg_quality = sum(record.letter_annotations["phred_quality"]) / len(record)
+
+            if (gc_bounds[0] <= gc_content <= gc_bounds[1] and
+                length_bounds[0] <= len(record) <= length_bounds[1] and
+                avg_quality >= quality_threshold):
+                filtered_records.append(record)
+                passed += 1
         
-        if (gc_bounds[0] <= gc_content <= gc_bounds[1] and
-            length_bounds[0] <= len(record) <= length_bounds[1] and
-            avg_quality >= quality_threshold):
-            filtered_records.append(record)
+        SeqIO.write(filtered_records, output_fastq, "fastq")
+        logging.info(f"{passed}/{total} records passed filtering and go to {output_fastq}")
+    except Exception as e:
+        logging.error(f"Error file {input_fastq}: {e}")
+        raise
+
     
-    SeqIO.write(filtered_records, output_fastq, "fastq")
